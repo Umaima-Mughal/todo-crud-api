@@ -1,7 +1,10 @@
+from logging import raiseExceptions
+
 from fastapi import FastAPI
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 from fastapi import HTTPException, status
+from starlette.responses import Response
 
 app = FastAPI()
 class TaskCreate(BaseModel):
@@ -79,5 +82,36 @@ def create_task(task : TaskCreate):
         tasks.append(new_task)
         return new_task
 
+# Stage 4: full CRUD
+class TaskUpdate(BaseModel):
+    title : str | None = None
+    done : bool | None = None
 
+@app.put("/tasks/{id}")
+def update_task(id:int,task:TaskUpdate):
+    if task.title is None and task.done is None:
+        raise HTTPException(
+            status_code=400,
+            detail="Empty/invalid body"
+        )
+    for t in tasks:
+        if t["id"] == id:
+            t["title"] = task.title
+            t["done"] = task.done
+            return t
+    raise HTTPException(
+                status_code=404,
+                detail = "Unknown id"
+            )
+
+@app.delete("/tasks/{id}")
+def delete(id:int):
+    for t in tasks:
+        if t["id"] == id:
+            tasks.remove(t)
+            return Response(status_code=status.HTTP_204_NO_CONTENT)
+    raise HTTPException(
+                status_code=404,
+                detail="Unknown id"
+            )
 
