@@ -1,5 +1,38 @@
 from fastapi import FastAPI
 from fastapi.responses import JSONResponse
+from pydantic import BaseModel
+from fastapi import HTTPException, status
+
+app = FastAPI()
+class TaskCreate(BaseModel):
+    title: str
+
+
+@app.post("/tasks", status_code=status.HTTP_201_CREATED)
+def create_task(task: TaskCreate):
+
+    # Validation
+    if task.title.strip() == "":
+        raise HTTPException(
+            status_code=400,
+            detail="Title cannot be empty"
+        )
+
+    # Next ID
+    next_id = tasks[-1]["id"] + 1
+
+    # New task
+    new_task = {
+        "id": next_id,
+        "title": task.title,
+        "done": False
+    }
+
+    # Add to list
+    tasks.append(new_task)
+
+    # Return created task
+    return new_task
 
 app = FastAPI()
 
@@ -28,3 +61,23 @@ def get_task(id:int):
         status_code=404,
         content={"error": f"Task {id} not found"}
     )
+# Stage 3: create with validation
+class TaskCreate(BaseModel):
+    title : str | None = None
+
+@app.post("/tasks",status_code=status.HTTP_201_CREATED)
+def create_task(task : TaskCreate):
+    if task.title is None or task.title.strip() == "":
+        raise HTTPException(
+            status_code=400,
+            detail="Title cannot be empty"
+        )
+
+    else:
+        next_id = tasks[-1]["id"] + 1
+        new_task = {"id": next_id, "title":task.title, "done": False}
+        tasks.append(new_task)
+        return new_task
+
+
+
