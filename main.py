@@ -18,6 +18,12 @@ tasks = [{"id":1,"title":"Submit project report","done":True},
         {"id":2,"title":"Complete coding practice","done":False},
         {"id":3,"title":"Watch backend lecture","done":False}]
 
+initial_tasks = [
+    {"id": 1, "title": "Submit project report", "done": True},
+    {"id": 2, "title": "Complete coding practice", "done": False},
+    {"id": 3, "title": "Watch backend lecture", "done": False},
+]
+
 @app.get("/tasks", summary="Get all tasks")
 def task():
     return tasks
@@ -85,3 +91,19 @@ def delete(id:int):
                 detail="Unknown id"
             )
 
+# reset
+@app.post(
+    "/reset",
+    status_code=status.HTTP_200_OK,
+    summary="Reset tasks to default",
+)
+def reset_tasks():
+    global tasks
+
+    tasks.clear()
+    tasks.extend(task.copy() for task in initial_tasks)
+
+    return {
+        "message": "Tasks have been reset successfully.",
+        "tasks": tasks
+    }
