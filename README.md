@@ -106,3 +106,9 @@ http://127.0.0.1:8000/docs
 ```
 <img width="1897" height="873" alt="image" src="https://github.com/user-attachments/assets/25de8336-84d3-466f-be55-6ed4937b8bf8" />
 
+## Example curl -i Output
+
+```bash
+curl -i http://127.0.0.1:8000/tasks
+```
+<img width="1791" height="331" alt="image" src="https://github.com/user-attachments/assets/f48fc1ac-9922-492b-98de-939507482d13" />
