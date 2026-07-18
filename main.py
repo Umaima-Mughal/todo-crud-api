@@ -67,6 +67,11 @@ def update_task(id:int,task:TaskUpdate):
             status_code=400,
             detail="Empty/invalid body"
         )
+    if task.title is not None and task.title.strip() == "":
+        raise HTTPException(
+            status_code=400,
+            detail="Title cannot be empty"
+        )
     for t in tasks:
         if t["id"] == id:
             if task.title is not None:
