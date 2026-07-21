@@ -171,17 +171,6 @@ SELECT * FROM tasks;
 
 This query retrieves all tasks stored in the database.
 
-Example output:
-
-```text
-id | title                    | done
--------------------------------------
-1  | Submit project report    | 1
-2  | Complete coding practice | 0
-3  | Watch backend lecture    | 0
-```
-
----
 
 ## Database Viewer Screenshot
 
