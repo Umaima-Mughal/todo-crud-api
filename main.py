@@ -11,6 +11,8 @@ from database import (
     get_all_tasks,
     get_task_by_id,
     create_task,
+    update_task,
+    delete_task,
 )
 
 create_table()
@@ -72,40 +74,40 @@ class TaskUpdate(BaseModel):
     done : bool | None = None
 
 @app.put("/tasks/{id}", summary="Update a task")
-def update_task(id:int,task:TaskUpdate):
+def update_task_api(id: int, task: TaskUpdate):
     if task.title is None and task.done is None:
         raise HTTPException(
             status_code=400,
             detail="Empty/invalid body"
         )
+
     if task.title is not None and task.title.strip() == "":
         raise HTTPException(
             status_code=400,
             detail="Title cannot be empty"
         )
-    for t in tasks:
-        if t["id"] == id:
-            if task.title is not None:
-                t["title"] = task.title
 
-            if task.done is not None:
-                t["done"] = task.done
-            return t
-    raise HTTPException(
-                status_code=404,
-                detail = "Unknown id"
-            )
+    updated = update_task(id, task.title, task.done)
+
+    if updated is None:
+        raise HTTPException(
+            status_code=404,
+            detail="Unknown id"
+        )
+
+    return updated
 
 @app.delete("/tasks/{id}", summary="Delete a task")
-def delete(id:int):
-    for t in tasks:
-        if t["id"] == id:
-            tasks.remove(t)
-            return Response(status_code=status.HTTP_204_NO_CONTENT)
-    raise HTTPException(
-                status_code=404,
-                detail="Unknown id"
-            )
+def delete_task_api(id: int):
+    deleted = delete_task(id)
+
+    if not deleted:
+        raise HTTPException(
+            status_code=404,
+            detail="Unknown id"
+        )
+
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 # reset
 @app.post(
