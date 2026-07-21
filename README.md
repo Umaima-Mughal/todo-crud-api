@@ -112,3 +112,37 @@ http://127.0.0.1:8000/docs
 curl -i http://127.0.0.1:8000/tasks
 ```
 <img width="1791" height="331" alt="image" src="https://github.com/user-attachments/assets/f48fc1ac-9922-492b-98de-939507482d13" />
+
+## Database (SQLite)
+
+### Why SQLite was chosen
+
+SQLite was chosen because it requires zero setup and stores the complete database in a single file. It is lightweight, easy to integrate, and the data survives application restarts without requiring a separate database server.
+
+### Database Location
+
+The SQLite database file is stored in the project root directory:
+
+```text
+tasks.db
+
+The database file is created automatically when the application starts. It is usually git-ignored, so each fresh clone starts with a new database that is automatically created with the required table and initial data.
+
+Automatic Database Creation
+
+No manual database setup is required. Running the application with:
+
+uvicorn main:app --reload
+
+automatically creates tasks.db, creates the tasks table, and inserts the three seeded tasks.
+
+## Example SQL Query Executed
+
+The following query was executed in DB Browser for SQLite during Stage 4:
+
+SELECT * FROM tasks;
+
+This query retrieves all tasks stored in the database.
+
+## Database Viewer Screenshot
+<img width="975" height="513" alt="image" src="https://github.com/user-attachments/assets/c17d3d59-a29e-4e89-afca-557af2883162" />
