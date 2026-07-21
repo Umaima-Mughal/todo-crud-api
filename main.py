@@ -5,7 +5,12 @@ from fastapi import HTTPException, status
 from starlette.responses import Response
 
 # DATABASE CONNECTION
-from database import create_table, seed_tasks
+from database import (
+    create_table,
+    seed_tasks,
+    get_all_tasks,
+    get_task_by_id,
+)
 
 create_table()
 seed_tasks()
@@ -32,17 +37,20 @@ initial_tasks = [
 
 @app.get("/tasks", summary="Get all tasks")
 def task():
-    return tasks
+    return get_all_tasks()
 
-@app.get("/tasks/{id}",summary="Get task by ID")
-def get_task(id:int):
-    for task in tasks:
-        if task["id"] == id:
-            return task
-    return JSONResponse(
-        status_code=404,
-        content={"error": f"Task {id} not found"}
-    )
+@app.get("/tasks/{id}", summary="Get task by ID")
+def get_task(id: int):
+    task = get_task_by_id(id)
+
+    if task is None:
+        return JSONResponse(
+            status_code=404,
+            content={"error": "Task not found"}
+        )
+
+    return task
+
 # Stage 3: create with validation
 class TaskCreate(BaseModel):
     title : str | None = None
