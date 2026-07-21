@@ -10,6 +10,7 @@ from database import (
     seed_tasks,
     get_all_tasks,
     get_task_by_id,
+    create_task,
 )
 
 create_table()
@@ -56,18 +57,14 @@ class TaskCreate(BaseModel):
     title : str | None = None
 
 @app.post("/tasks",status_code=status.HTTP_201_CREATED, summary="Create a new task")
-def create_task(task : TaskCreate):
+def add_task(task: TaskCreate):
     if task.title is None or task.title.strip() == "":
         raise HTTPException(
             status_code=400,
             detail="Title cannot be empty"
         )
 
-    else:
-        next_id = tasks[-1]["id"] + 1
-        new_task = {"id": next_id, "title":task.title, "done": False}
-        tasks.append(new_task)
-        return new_task
+    return create_task(task.title)
 
 # Stage 4: full CRUD
 class TaskUpdate(BaseModel):
