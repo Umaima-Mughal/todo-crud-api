@@ -4,6 +4,12 @@ from pydantic import BaseModel
 from fastapi import HTTPException, status
 from starlette.responses import Response
 
+# DATABASE CONNECTION
+from database import create_table, seed_tasks
+
+create_table()
+seed_tasks()
+
 app = FastAPI()
 
 @app.get("/",summary="API information")
