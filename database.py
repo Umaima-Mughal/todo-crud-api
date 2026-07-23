@@ -1,11 +1,15 @@
-import sqlite3
+import os
+import psycopg
+from dotenv import load_dotenv
 
+load_dotenv()
 
-DATABASE_NAME = "tasks.db"
+DATABASE_URL = os.getenv("DATABASE_URL")
 
 
 def get_connection():
-    return sqlite3.connect(DATABASE_NAME)
+    return psycopg.connect(DATABASE_URL)
+
 
 def create_table():
     conn = get_connection()
@@ -13,14 +17,16 @@ def create_table():
 
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS tasks(
-        id INTEGER PRIMARY KEY,
+        id SERIAL PRIMARY KEY,
         title TEXT NOT NULL,
         done BOOLEAN NOT NULL
     )
     """)
 
     conn.commit()
+    cursor.close()
     conn.close()
+
 
 def seed_tasks():
     conn = get_connection()
@@ -30,23 +36,18 @@ def seed_tasks():
     count = cursor.fetchone()[0]
 
     if count == 0:
-        cursor.execute(
-            "INSERT INTO tasks (title, done) VALUES (?, ?)",
-            ("Learn FastAPI", False)
-        )
-
-        cursor.execute(
-            "INSERT INTO tasks (title, done) VALUES (?, ?)",
-            ("Build CRUD API", False)
-        )
-
-        cursor.execute(
-            "INSERT INTO tasks (title, done) VALUES (?, ?)",
-            ("Learn SQLite", False)
-        )
+        cursor.execute("""
+        INSERT INTO tasks (title, done)
+        VALUES
+        ('Learn FastAPI', false),
+        ('Build CRUD API', false),
+        ('Learn PostgreSQL', false)
+        """)
 
     conn.commit()
+    cursor.close()
     conn.close()
+
 
 def get_all_tasks():
     conn = get_connection()
@@ -55,9 +56,11 @@ def get_all_tasks():
     cursor.execute("SELECT * FROM tasks")
     rows = cursor.fetchall()
 
+    cursor.close()
     conn.close()
 
     tasks = []
+
     for row in rows:
         tasks.append({
             "id": row[0],
@@ -73,12 +76,13 @@ def get_task_by_id(task_id):
     cursor = conn.cursor()
 
     cursor.execute(
-        "SELECT * FROM tasks WHERE id = ?",
+        "SELECT * FROM tasks WHERE id = %s",
         (task_id,)
     )
 
     row = cursor.fetchone()
 
+    cursor.close()
     conn.close()
 
     if row is None:
@@ -90,18 +94,24 @@ def get_task_by_id(task_id):
         "done": bool(row[2])
     }
 
+
 def create_task(title):
     conn = get_connection()
     cursor = conn.cursor()
 
     cursor.execute(
-        "INSERT INTO tasks (title, done) VALUES (?, ?)",
+        """
+        INSERT INTO tasks (title, done)
+        VALUES (%s, %s)
+        RETURNING id
+        """,
         (title, False)
     )
 
-    task_id = cursor.lastrowid
+    task_id = cursor.fetchone()[0]
 
     conn.commit()
+    cursor.close()
     conn.close()
 
     return {
@@ -110,14 +120,20 @@ def create_task(title):
         "done": False
     }
 
+
 def update_task(task_id, title=None, done=None):
     conn = get_connection()
     cursor = conn.cursor()
 
-    cursor.execute("SELECT * FROM tasks WHERE id = ?", (task_id,))
+    cursor.execute(
+        "SELECT * FROM tasks WHERE id = %s",
+        (task_id,)
+    )
+
     row = cursor.fetchone()
 
     if row is None:
+        cursor.close()
         conn.close()
         return None
 
@@ -125,11 +141,16 @@ def update_task(task_id, title=None, done=None):
     new_done = row[2] if done is None else done
 
     cursor.execute(
-        "UPDATE tasks SET title = ?, done = ? WHERE id = ?",
+        """
+        UPDATE tasks
+        SET title = %s, done = %s
+        WHERE id = %s
+        """,
         (new_title, new_done, task_id)
     )
 
     conn.commit()
+    cursor.close()
     conn.close()
 
     return {
@@ -138,20 +159,20 @@ def update_task(task_id, title=None, done=None):
         "done": bool(new_done)
     }
 
+
 def delete_task(task_id):
     conn = get_connection()
     cursor = conn.cursor()
 
-    cursor.execute("SELECT * FROM tasks WHERE id = ?", (task_id,))
-    row = cursor.fetchone()
+    cursor.execute(
+        "DELETE FROM tasks WHERE id = %s",
+        (task_id,)
+    )
 
-    if row is None:
-        conn.close()
-        return False
-
-    cursor.execute("DELETE FROM tasks WHERE id = ?", (task_id,))
+    deleted = cursor.rowcount > 0
 
     conn.commit()
+    cursor.close()
     conn.close()
 
-    return True
+    return deleted
