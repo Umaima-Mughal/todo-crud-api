@@ -112,3 +112,19 @@ http://127.0.0.1:8000/docs
 curl -i http://127.0.0.1:8000/tasks
 ```
 <img width="1791" height="331" alt="image" src="https://github.com/user-attachments/assets/f48fc1ac-9922-492b-98de-939507482d13" />
+
+## PostgreSQL Database & Docker Setup
+
+This version of the Task API uses PostgreSQL instead of SQLite.
+The application follows a layered architecture where the database operations are isolated in the repository layer, allowing the storage engine to be changed without modifying API routes.
+
+PostgreSQL runs inside a Docker container and data is persisted using a Docker volume.
+
+---
+
+## Run the Complete Stack
+
+The complete application stack (FastAPI + PostgreSQL) can be started with one command:
+
+```bash
+docker compose up
