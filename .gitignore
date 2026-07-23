@@ -1,4 +1,17 @@
+# IDE
 .idea/
-__pycache__/
+.vscode/
+
+# Python
 .venv/
+__pycache__/
 *.pyc
+
+# Environment variables
+.env
+
+# SQLite database
+*.db
+
+# OS
+.DS_Store
