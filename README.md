@@ -92,7 +92,6 @@ content-type: application/json
   }
 ]
 ```
-
 ---
 
 ## Swagger UI
@@ -112,6 +111,74 @@ http://127.0.0.1:8000/docs
 curl -i http://127.0.0.1:8000/tasks
 ```
 <img width="1791" height="331" alt="image" src="https://github.com/user-attachments/assets/f48fc1ac-9922-492b-98de-939507482d13" />
+
+---
+# Database (SQLite)
+
+## Why SQLite was chosen
+
+SQLite was chosen because it requires zero setup and stores the complete database in a single file.
+
+It is lightweight, easy to integrate, and allows data to persist between application restarts without requiring a separate database server.
+
+For this project, SQLite provides a simple and reliable way to demonstrate CRUD operations with real database persistence.
+
+---
+
+## Database Location
+
+The SQLite database file is stored in the project root directory:
+
+```text
+tasks.db
+```
+
+The database file is created automatically when the application starts.
+
+It is usually git-ignored, so each fresh clone starts with a new database that is automatically created with the required table and initial data.
+
+---
+
+## Automatic Database Creation
+
+No manual database setup is required.
+
+After installing dependencies, running:
+
+```bash
+uvicorn main:app --reload
+```
+
+automatically:
+
+- Creates the `tasks.db` SQLite database
+- Creates the `tasks` table
+- Inserts the initial seeded tasks
+
+This allows anyone cloning the repository to run the project without additional database configuration.
+
+---
+
+## Example SQL Query Executed
+
+The following query was executed in **DB Browser for SQLite** during Stage 4:
+
+```sql
+SELECT * FROM tasks;
+```
+
+This query retrieves all tasks stored in the database.
+
+
+## Database Viewer Screenshot
+
+The SQLite database was inspected using **DB Browser for SQLite**.
+
+The screenshot below shows the `tasks` table and stored records:
+
+<img width="975" height="513" alt="Database Screenshot" src="https://github.com/user-attachments/assets/c17d3d59-a29e-4e89-afca-557af2883162" />
+
+---
 
 ## PostgreSQL Database & Docker Setup
 
@@ -222,7 +289,6 @@ Example response:
   }
 ]
 ```
-
 ---
 
 ## Database Verification Screenshot
