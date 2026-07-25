@@ -1,6 +1,7 @@
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
-from fastapi import FastAPI, HTTPException, status, Header, Depends
+from fastapi import FastAPI, HTTPException, status, Depends
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from starlette.responses import Response
 from contextlib import asynccontextmanager
 from supabase_client import supabase
@@ -23,25 +24,17 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(lifespan=lifespan)
 
+security = HTTPBearer()
+
 # SUPABASE AUTH IMPLEMENTATION
 class AuthRequest(BaseModel):
     email: str
     password: str
 
-def get_current_user(authorization: str | None = Header(default=None)):
-    if not authorization or not authorization.startswith("Bearer "):
-        raise HTTPException(
-            status_code=401,
-            detail="Access token required"
-        )
-
-    token = authorization.split(" ")[1]
-
-    if not token:
-        raise HTTPException(
-            status_code=401,
-            detail="Access token required"
-        )
+def get_current_user(
+    credentials: HTTPAuthorizationCredentials = Depends(security)
+):
+    token = credentials.credentials
 
     try:
         response = supabase.auth.get_user(token)
@@ -56,6 +49,7 @@ def get_current_user(authorization: str | None = Header(default=None)):
             status_code=401,
             detail="Invalid or expired token"
         )
+
 
 @app.post("/auth/signup", status_code=201)
 def signup(data: AuthRequest):
