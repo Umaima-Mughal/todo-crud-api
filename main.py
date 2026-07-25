@@ -1,6 +1,6 @@
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
-from fastapi import FastAPI, HTTPException, status
+from fastapi import FastAPI, HTTPException, status, Header
 from starlette.responses import Response
 from contextlib import asynccontextmanager
 from supabase_client import supabase
@@ -73,6 +73,33 @@ def login(data: AuthRequest):
             status_code=401,
             detail="Invalid login credentials"
         )
+
+@app.get("/public/info")
+def public_info():
+    return {
+        "message": "Welcome stranger! This info is public."
+    }
+
+@app.get("/protected/profile")
+def protected_profile(authorization: str | None = Header(default=None)):
+    if not authorization or not authorization.startswith("Bearer "):
+        raise HTTPException(
+            status_code=401,
+            detail="Access token required"
+        )
+
+    token = authorization.split(" ")[1]
+
+    if not token:
+        raise HTTPException(
+            status_code=401,
+            detail="Access token required"
+        )
+
+    return {
+        "message": "Protected route accessed",
+        "token_received": True
+    }
 
 
 @app.get("/",summary="API information")
