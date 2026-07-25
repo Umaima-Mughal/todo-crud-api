@@ -123,9 +123,13 @@ def dashboard(current_user = Depends(get_current_user)):
 @app.post("/auth/logout", status_code=204)
 def logout(current_user = Depends(get_current_user)):
 
-    supabase.auth.sign_out(
-        current_user["token"]
-    )
+    try:
+        supabase.auth.sign_out()
+    except Exception as e:
+        raise HTTPException(
+            status_code=400,
+            detail=str(e)
+        )
 
     return Response(status_code=204)
 
