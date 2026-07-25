@@ -1,7 +1,6 @@
-from fastapi import FastAPI
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
-from fastapi import HTTPException, status
+from fastapi import FastAPI, HTTPException, status
 from starlette.responses import Response
 from contextlib import asynccontextmanager
 from supabase_client import supabase
@@ -9,7 +8,6 @@ from supabase_client import supabase
 # DATABASE CONNECTION
 from database import (
     create_table,
-    seed_tasks,
     get_all_tasks,
     get_task_by_id,
     create_task,
@@ -17,15 +15,65 @@ from database import (
     delete_task,
 )
 
-create_table()
-seed_tasks()
-
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    print("Server running and connected to Supabase")
+    create_table()
+    print("Server running and connected")
     yield
 
 app = FastAPI(lifespan=lifespan)
+
+# SUPABASE AUTH IMPLEMENTATION
+class AuthRequest(BaseModel):
+    email: str
+    password: str
+
+@app.post("/auth/signup", status_code=201)
+def signup(data: AuthRequest):
+    if not data.email or not data.password:
+        raise HTTPException(
+            status_code=400,
+            detail="Email and password are required"
+        )
+
+    try:
+        response = supabase.auth.sign_up(
+            {
+                "email": data.email,
+                "password": data.password
+            }
+        )
+        return response.user
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+@app.post("/auth/login")
+def login(data: AuthRequest):
+    if not data.email or not data.password:
+        raise HTTPException(
+            status_code=400,
+            detail="Email and password are required"
+        )
+
+    try:
+        response = supabase.auth.sign_in_with_password(
+            {
+                "email": data.email,
+                "password": data.password
+            }
+        )
+
+        return {
+            "access_token": response.session.access_token,
+            "refresh_token": response.session.refresh_token
+        }
+
+    except Exception:
+        raise HTTPException(
+            status_code=401,
+            detail="Invalid login credentials"
+        )
+
 
 @app.get("/",summary="API information")
 def root():
@@ -34,16 +82,6 @@ def root():
 @app.get("/health",summary="Check API health")
 def health():
     return {"status": "ok"}
-
-tasks = [{"id":1,"title":"Submit project report","done":True},
-        {"id":2,"title":"Complete coding practice","done":False},
-        {"id":3,"title":"Watch backend lecture","done":False}]
-
-initial_tasks = [
-    {"id": 1, "title": "Submit project report", "done": True},
-    {"id": 2, "title": "Complete coding practice", "done": False},
-    {"id": 3, "title": "Watch backend lecture", "done": False},
-]
 
 @app.get("/tasks", summary="Get all tasks")
 def task():
@@ -116,19 +154,3 @@ def delete_task_api(id: int):
 
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
-# reset
-@app.post(
-    "/reset",
-    status_code=status.HTTP_200_OK,
-    summary="Reset tasks to default",
-)
-def reset_tasks():
-    global tasks
-
-    tasks.clear()
-    tasks.extend(task.copy() for task in initial_tasks)
-
-    return {
-        "message": "Tasks have been reset successfully.",
-        "tasks": tasks
-    }
