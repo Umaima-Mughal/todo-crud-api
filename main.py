@@ -1,6 +1,6 @@
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
-from fastapi import FastAPI, HTTPException, status, Header
+from fastapi import FastAPI, HTTPException, status, Header, Depends
 from starlette.responses import Response
 from contextlib import asynccontextmanager
 from supabase_client import supabase
@@ -27,6 +27,35 @@ app = FastAPI(lifespan=lifespan)
 class AuthRequest(BaseModel):
     email: str
     password: str
+
+def get_current_user(authorization: str | None = Header(default=None)):
+    if not authorization or not authorization.startswith("Bearer "):
+        raise HTTPException(
+            status_code=401,
+            detail="Access token required"
+        )
+
+    token = authorization.split(" ")[1]
+
+    if not token:
+        raise HTTPException(
+            status_code=401,
+            detail="Access token required"
+        )
+
+    try:
+        response = supabase.auth.get_user(token)
+
+        return {
+            "user": response.user,
+            "token": token
+        }
+
+    except Exception:
+        raise HTTPException(
+            status_code=401,
+            detail="Invalid or expired token"
+        )
 
 @app.post("/auth/signup", status_code=201)
 def signup(data: AuthRequest):
@@ -81,37 +110,30 @@ def public_info():
     }
 
 @app.get("/protected/profile")
-def protected_profile(authorization: str | None = Header(default=None)):
-    if not authorization or not authorization.startswith("Bearer "):
-        raise HTTPException(
-            status_code=401,
-            detail="Access token required"
-        )
+def protected_profile(current_user = Depends(get_current_user)):
 
-    token = authorization.split(" ")[1]
+    user = current_user["user"]
 
-    if not token:
-        raise HTTPException(
-            status_code=401,
-            detail="Access token required"
-        )
+    return {
+        "id": user.id,
+        "email": user.email,
+        "created_at": user.created_at
+    }
 
-    try:
-        response = supabase.auth.get_user(token)
+@app.get("/protected/dashboard")
+def dashboard(current_user = Depends(get_current_user)):
+    return {
+        "message": "Welcome to dashboard"
+    }
 
-        user = response.user
+@app.post("/auth/logout", status_code=204)
+def logout(current_user = Depends(get_current_user)):
 
-        return {
-            "id": user.id,
-            "email": user.email,
-            "created_at": user.created_at
-        }
+    supabase.auth.sign_out(
+        current_user["token"]
+    )
 
-    except Exception:
-        raise HTTPException(
-            status_code=401,
-            detail="Invalid or expired token"
-        )
+    return Response(status_code=204)
 
 
 @app.get("/",summary="API information")
@@ -138,7 +160,7 @@ def get_task(id: int):
 
     return task
 
-# Stage 3: create with validation
+
 class TaskCreate(BaseModel):
     title : str | None = None
 
@@ -152,7 +174,7 @@ def add_task(task: TaskCreate):
 
     return create_task(task.title)
 
-# Stage 4: full CRUD
+
 class TaskUpdate(BaseModel):
     title : str | None = None
     done : bool | None = None
