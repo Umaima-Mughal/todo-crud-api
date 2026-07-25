@@ -3,6 +3,8 @@ from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 from fastapi import HTTPException, status
 from starlette.responses import Response
+from contextlib import asynccontextmanager
+from supabase_client import supabase
 
 # DATABASE CONNECTION
 from database import (
@@ -18,7 +20,12 @@ from database import (
 create_table()
 seed_tasks()
 
-app = FastAPI()
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    print("Server running and connected to Supabase")
+    yield
+
+app = FastAPI(lifespan=lifespan)
 
 @app.get("/",summary="API information")
 def root():
