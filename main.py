@@ -96,10 +96,22 @@ def protected_profile(authorization: str | None = Header(default=None)):
             detail="Access token required"
         )
 
-    return {
-        "message": "Protected route accessed",
-        "token_received": True
-    }
+    try:
+        response = supabase.auth.get_user(token)
+
+        user = response.user
+
+        return {
+            "id": user.id,
+            "email": user.email,
+            "created_at": user.created_at
+        }
+
+    except Exception:
+        raise HTTPException(
+            status_code=401,
+            detail="Invalid or expired token"
+        )
 
 
 @app.get("/",summary="API information")
